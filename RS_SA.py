@@ -6,7 +6,8 @@ from numpy import asarray
 from numpy import sum as numpysum
 
 # def population size -> ~multiplication time increase
-_pop_size = 50
+_pop_size_RS = 1
+_pop_size_SA = 10
 
 
 # Function 1: First Dejong function
@@ -27,7 +28,7 @@ def schwefel(x):
     return 418.9829 * n - sum([xi * np.sin(np.sqrt(abs(xi))) for xi in x])
 
 
-def random_search(obj_func, bounds, max_iter, pop_size=_pop_size):
+def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
     # Initialize population with random solutions within the specified bounds
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
 
@@ -55,7 +56,7 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size):
     return best_solution, best_fitness
 
 
-def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size, temperature=100, cooling_rate=0.95):
+def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, temperature=100, cooling_rate=0.95):
     # Initialize the population and fitness arrays
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
     fitness = np.array([obj_func(ind) for ind in pop])
@@ -105,11 +106,12 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     start_time = time.time()  # Get the current time
     best_solution_history = []
     best_solution_fitness_history = []
-    for i in range(30):
+    for i in range(1):
         fitness_history = []
         solution_history = []
-        if (i + 1) % 10 == 0 and i != 0:
-            print("i = " + str(i + 1) + "/" + str(30))
+        print("i = " + str(i + 1) + "/" + str(30))
+        #if (i + 1) % 10 == 0 and i != 0:
+            #print("i = " + str(i + 1) + "/" + str(30))
         if algo == 'random_search':
             for j in range(1, _max_iter):
                 best_solution_iter, fitness = random_search(obj_func, bounds, max_iter=_max_iter)
@@ -142,7 +144,12 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     plt.text(0.05, 0.95, f"Best solution: {best_solution}", transform=plt.gca().transAxes, va='top', fontsize=18)
     plt.text(0.05, 0.85, f"Best fitness: {best_fitness}", transform=plt.gca().transAxes, va='top', fontsize=18)
     plt.text(0.05, 0.8, f"Global minimum: {global_min}", transform=plt.gca().transAxes, va='top', fontsize=18)
-    plt.text(10, 0.2, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} s; population size = {_pop_size}")
+    if algo == 'random_search':
+        plt.text(10, 0.2, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          f"s; population size = {_pop_size_RS}")
+    elif algo == 'simulated_annealing':
+        plt.text(10, 0.2, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          f"s; population size = {_pop_size_SA}")
     # transform=plt.gca().transAxes, va='top',fontsize=18)
     plt.savefig(f"/Users/milanjanovic/Desktop/{filename}.png")
     plt.clf()  # clear the figure to avoid overlapping plots
