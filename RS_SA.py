@@ -40,9 +40,12 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
     best_solution = pop[np.argmin(fitness)]
 
     # Perform the specified number of iterations
-    for _ in range(max_iter):
-        # Generate a new population with random solutions
-        new_pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
+    for i in range(max_iter):
+        # Generate a new population with random solutions within 10% radius of the best solution
+        radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
+        new_pop = np.random.uniform(np.maximum(bounds[:, 0], best_solution - radius),
+                                    np.minimum(bounds[:, 1], best_solution + radius),
+                                    size=(pop_size, bounds.shape[0]))
 
         # Evaluate fitness of each solution in the new population
         fitness = [obj_func(ind) for ind in new_pop]
@@ -145,10 +148,10 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     plt.text(0.05, 0.85, f"Best fitness: {best_fitness}", transform=plt.gca().transAxes, va='top', fontsize=18)
     plt.text(0.05, 0.8, f"Global minimum: {global_min}", transform=plt.gca().transAxes, va='top', fontsize=18)
     if algo == 'random_search':
-        plt.text(10, 0.2, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+        plt.text(0.05, 0.1, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
                           f"s; population size = {_pop_size_RS}")
     elif algo == 'simulated_annealing':
-        plt.text(10, 0.2, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+        plt.text(0.5, 0.1, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
                           f"s; population size = {_pop_size_SA}")
     # transform=plt.gca().transAxes, va='top',fontsize=18)
     plt.savefig(f"/Users/milanjanovic/Desktop/{filename}.png")
