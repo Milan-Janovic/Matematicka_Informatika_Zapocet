@@ -73,8 +73,11 @@ def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, tempe
     for i in range(max_iter):
         # Update the temperature
         temperature *= cooling_rate
-        # Generate a candidate population
-        candidate_pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
+        # Generate a candidate population within 10% of each element of the current best solution
+        candidate_pop = np.random.uniform(
+            np.maximum(bounds[:, 0], best_solution - 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])),
+            np.minimum(bounds[:, 1], best_solution + 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])),
+            size=(pop_size, bounds.shape[0]))
         # Evaluate the fitness of the candidate population
         candidate_fitness = np.array([obj_func(ind) for ind in candidate_pop])
         # Calculate the difference in fitness between the candidate and current populations
