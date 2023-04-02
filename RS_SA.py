@@ -7,7 +7,8 @@ from numpy import sum as numpysum
 
 # def population size -> ~multiplication time increase
 _pop_size_RS = 1
-_pop_size_SA = 10
+_pop_size_SA = 1
+number_of_metropolis_calls = 10
 
 
 # Function 1: First Dejong function
@@ -39,10 +40,12 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
     best_fitness = np.min(fitness)
     best_solution = pop[np.argmin(fitness)]
 
+    # Calculate radius
+    radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
+
     # Perform the specified number of iterations
     for i in range(max_iter):
         # Generate a new population with random solutions within 10% radius of the best solution
-        radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
         new_pop = np.random.uniform(np.maximum(bounds[:, 0], best_solution - radius),
                                     np.minimum(bounds[:, 1], best_solution + radius),
                                     size=(pop_size, bounds.shape[0]))
@@ -59,6 +62,10 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
     return best_solution, best_fitness
 
 
+# Old version of the functions where the "j" loop was dependent of the pop_size, therefore if we wanted to run the
+# metropolis 10 times then pop_size = 10 but this also meant that we've generated 10 candidates on each pop - this
+# was most likely wrong --> will need to confirm with Mr. Senkerik !!!
+"""
 def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, temperature=100, cooling_rate=0.95):
     # Initialize the population and fitness arrays
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
@@ -66,37 +73,100 @@ def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, tempe
     # Set the initial best fitness and solution
     best_fitness = np.min(fitness)
     best_solution = pop[np.argmin(fitness)]
-    # Initialize the acceptance probabilities array
-    acceptance_probs = np.zeros(pop_size)
+
+    # Calculate radius
+    radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
 
     # Loop through the specified number of iterations
     for i in range(max_iter):
         # Update the temperature
         temperature *= cooling_rate
-        # Generate a candidate population within 10% of each element of the current best solution
-        candidate_pop = np.random.uniform(
-            np.maximum(bounds[:, 0], best_solution - 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])),
-            np.minimum(bounds[:, 1], best_solution + 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])),
-            size=(pop_size, bounds.shape[0]))
-        # Evaluate the fitness of the candidate population
+        # Generate a candidate population within 10% radius of the best solution
+        candidate_pop = np.random.uniform(np.maximum(bounds[:, 0], best_solution - radius),
+                                           np.minimum(bounds[:, 1], best_solution + radius),
+                                           size=(pop_size, bounds.shape[0]))
         candidate_fitness = np.array([obj_func(ind) for ind in candidate_pop])
-        # Calculate the difference in fitness between the candidate and current populations
-        delta_fitness = candidate_fitness - fitness
 
-        # Determine which solutions in the candidate population are better than the current population
-        better_solutions = delta_fitness < 0
-        # Set the acceptance probabilities of the better solutions to 1
-        acceptance_probs[better_solutions] = 1
-        # Calculate the acceptance probabilities of the worse solutions
-        acceptance_probs[~better_solutions] = np.exp(-delta_fitness[~better_solutions] / temperature)
+        # Loop through each candidate solution
+        for j in range(pop_size):
+            # Calculate the difference in fitness between the candidate and current solutions
+            delta_fitness = candidate_fitness[j] - fitness[j]
 
-        # Determine which solutions to accept based on their acceptance probabilities
-        accept_solutions = np.random.rand(pop_size) < acceptance_probs
-        # Update the current population and fitness with the accepted solutions
-        pop[accept_solutions] = candidate_pop[accept_solutions]
-        fitness[accept_solutions] = candidate_fitness[accept_solutions]
+            # If the candidate solution has a lower fitness, accept it
+            if delta_fitness < 0:
+                pop[j] = candidate_pop[j]
+                fitness[j] = candidate_fitness[j]
 
-        # Update the best fitness and solution if a new one is found
+                # Update the best fitness and solution if necessary
+                if candidate_fitness[j] < best_fitness:
+                    best_fitness = candidate_fitness[j]
+                    best_solution = candidate_pop[j]
+
+            # If the candidate solution has a higher fitness, accept it with a probability determined by the
+            # Metropolis-Hastings criterion
+            else:
+                acceptance_prob = np.exp(-delta_fitness / temperature)
+                if np.random.rand() < acceptance_prob:
+                    pop[j] = candidate_pop[j]
+                    fitness[j] = candidate_fitness[j]
+
+        # Update the best fitness and solution if necessary (in case a better solution was found in the inner loop)
+        current_best_fitness = np.min(fitness)
+        if current_best_fitness < best_fitness:
+            best_fitness = current_best_fitness
+            best_solution = pop[np.argmin(fitness)]
+
+    # Return the best solution and fitness
+    return best_solution, best_fitness
+"""
+
+
+def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rate=0.95):
+    # Initialize the population and fitness arrays
+    pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(1, bounds.shape[0]))
+    fitness = np.array([obj_func(pop[0])])
+    # Set the initial best fitness and solution
+    best_fitness = np.min(fitness)
+    best_solution = pop[np.argmin(fitness)]
+
+    # Calculate radius
+    radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
+
+    # Loop through the specified number of iterations
+    for i in range(max_iter):
+        # Update the temperature
+        temperature *= cooling_rate
+
+        # Loop through 10 candidates
+        for j in range(number_of_metropolis_calls):
+            # Generate a candidate solution within 10% radius of the best solution
+            candidate = np.random.uniform(np.maximum(bounds[:, 0], best_solution - radius),
+                                          np.minimum(bounds[:, 1], best_solution + radius),
+                                          size=(1, bounds.shape[0]))
+            candidate_fitness = obj_func(candidate[0])
+
+            # Calculate the difference in fitness between the candidate and current solution
+            delta_fitness = candidate_fitness - fitness[0]
+
+            # If the candidate solution has a lower fitness, accept it
+            if delta_fitness < 0:
+                pop[0] = candidate[0]
+                fitness[0] = candidate_fitness
+
+                # Update the best fitness and solution if necessary
+                if candidate_fitness < best_fitness:
+                    best_fitness = candidate_fitness
+                    best_solution = candidate[0]
+
+            # If the candidate solution has a higher fitness, accept it with a probability determined by the
+            # Metropolis-Hastings criterion
+            else:
+                acceptance_prob = np.exp(-delta_fitness / temperature)
+                if np.random.rand() < acceptance_prob:
+                    pop[0] = candidate[0]
+                    fitness[0] = candidate_fitness
+
+        # Update the best fitness and solution if necessary (in case a better solution was found in the inner loop)
         current_best_fitness = np.min(fitness)
         if current_best_fitness < best_fitness:
             best_fitness = current_best_fitness
@@ -112,12 +182,11 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     start_time = time.time()  # Get the current time
     best_solution_history = []
     best_solution_fitness_history = []
-    for i in range(1):
+    for i in range(30):
         fitness_history = []
         solution_history = []
-        print("i = " + str(i + 1) + "/" + str(30))
-        #if (i + 1) % 10 == 0 and i != 0:
-            #print("i = " + str(i + 1) + "/" + str(30))
+        if (i + 1) % 10 == 0 and i != 0:
+            print("i = " + str(i + 1) + "/" + str(30))
         if algo == 'random_search':
             for j in range(1, _max_iter):
                 best_solution_iter, fitness = random_search(obj_func, bounds, max_iter=_max_iter)
@@ -137,7 +206,11 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
         best_solution_history.append(best_solution)
         best_solution_fitness_history.append(best_fitness)
         plt.plot(fitness_history, linewidth=0.5)
+
     print(f"Best solution for {title} after 30 runs: {best_solution}")
+    print(dejong1(best_solution))
+    print(dejong2(best_solution))
+    print(schwefel(best_solution))
     print(f"Best fitness for {title} after 30 runs: {best_fitness}")
 
     end_time = time.time()  # Get the current time again
@@ -147,15 +220,54 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     plt.title(title, fontsize=30)
     plt.xlabel("Number of iterations", fontsize=20)
     plt.ylabel("Fitness", fontsize=20)
-    plt.text(0.05, 0.95, f"Best solution: {best_solution}", transform=plt.gca().transAxes, va='top', fontsize=18)
-    plt.text(0.05, 0.85, f"Best fitness: {best_fitness}", transform=plt.gca().transAxes, va='top', fontsize=18)
-    plt.text(0.05, 0.8, f"Global minimum: {global_min}", transform=plt.gca().transAxes, va='top', fontsize=18)
+    plt.text(0.05, 0.95, f"Best solution: {best_solution}", transform=plt.gca().transAxes, va='top', fontsize=20)
+    plt.text(0.05, 0.9, f"Best fitness: {best_fitness}", transform=plt.gca().transAxes, va='top', fontsize=20)
+    plt.text(0.05, 0.85, f"Global minimum: {global_min}", transform=plt.gca().transAxes, va='top', fontsize=20)
     if algo == 'random_search':
-        plt.text(0.05, 0.1, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
-                          f"s; population size = {_pop_size_RS}")
+        plt.text(0.05, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          f"s; population size = {_pop_size_RS}",fontsize=20)
     elif algo == 'simulated_annealing':
-        plt.text(0.5, 0.1, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
-                          f"s; population size = {_pop_size_SA}")
-    # transform=plt.gca().transAxes, va='top',fontsize=18)
-    plt.savefig(f"/Users/milanjanovic/Desktop/{filename}.png")
+        plt.text(0.5, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          f"s; population size = {_pop_size_SA}", fontsize=20)
+    plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Graphs/{filename}.png")
     plt.clf()  # clear the figure to avoid overlapping plots
+
+    # Calculate statistics of the best_solution_fitness_history
+    min_fitness, max_fitness, mean_fitness, std_fitness = calculate_statictics(best_solution_fitness_history)
+
+    plt.plot(best_solution_fitness_history, linewidth=0.5)
+    plt.title(title + "best fitness convergence", fontsize=10)
+    plt.xlabel("Number of iterations", fontsize=10)
+    plt.ylabel("Fitness", fontsize=10)
+    plt.text(0.7, 0.95, f"Min Fitness: {min_fitness}", transform=plt.gca().transAxes, va='top', fontsize=10)
+    plt.text(0.7, 0.9, f"Max Fitness: {max_fitness}", transform=plt.gca().transAxes, va='top', fontsize=10)
+    plt.text(0.7, 0.85, f"Mean Fitness: {mean_fitness}", transform=plt.gca().transAxes, va='top', fontsize=10)
+    plt.text(0.7, 0.8, f"Std. Dev.: {std_fitness}", transform=plt.gca().transAxes, va='top', fontsize=10)
+    plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Convergence_Graphs/{filename}.png")
+    plt.clf()
+
+    return best_solution_fitness_history
+
+
+def calculate_statictics(best_solution_fitness_history):
+    # Calculate statistics of the best_solution_fitness_history
+    min_fitness = min(best_solution_fitness_history)
+    max_fitness = max(best_solution_fitness_history)
+    mean_fitness = np.mean(best_solution_fitness_history)
+    std_fitness = np.std(best_solution_fitness_history)
+    return min_fitness, max_fitness, mean_fitness, std_fitness
+
+
+def plot_fitness_comparison(func1_name, func2_name, obj_fc_and_dimensions, fitness_history1, fitness_history2):
+    plt.plot(fitness_history1, label=func1_name, linewidth=0.5)
+    plt.plot(fitness_history2, label=func2_name, linewidth=0.5)
+    plt.title(f"{func1_name} vs {func2_name} Fitness Comparison", fontsize=30)
+    plt.xlabel("Number of iterations", fontsize=20)
+    plt.ylabel("Fitness", fontsize=20)
+    plt.legend(fontsize=20)
+    plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Comparison/{func1_name} " f" {func2_name} " f" {obj_fc_and_dimensions}.png")
+    plt.clf()
+
+
+
+
