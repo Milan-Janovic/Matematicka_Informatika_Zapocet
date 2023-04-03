@@ -21,8 +21,8 @@ global_SD10 = np.full(10, 1)
 global_SCH10 = np.full(10, 420.9687)
 
 # Define max iterations -> ~quadratic time increase
-_max_iter_RS = 100000
-_max_iter_SA = 10000
+_max_iter_RS = 12000
+_max_iter_SA = 12000
 
 plt.figure(figsize=(24, 12))
 # Plot the convergence graph for First Dejong function
@@ -34,7 +34,7 @@ SA_FD5_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong1, bounds1_D5, 
                     "1.SA_FirstDejongConvergenceD5", _max_iter_SA, global_FD5, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "FD5", RS_FD5_best_fitness_history, SA_FD5_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "FD5", RS_FD5_best_fitness_history, SA_FD5_best_fitness_history)
 
 
 # Plot the convergence graph for Second Dejong function
@@ -46,7 +46,7 @@ SA_SD5_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong2, bounds2_D5, 
                     "2.SA_SecondDejongConvergenceD5", _max_iter_SA, global_SD5, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SD5", RS_SD5_best_fitness_history, SA_SD5_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "SD5", RS_SD5_best_fitness_history, SA_SD5_best_fitness_history)
 
 
 # Plot the convergence graph for Schwefel function
@@ -58,7 +58,7 @@ SA_SCH5_best_fitness_history = rs_sa.plot_convergence(rs_sa.schwefel, bounds3_D5
                     "3.SA_SchwefelConvergenceD5", _max_iter_SA, global_SCH5, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SCH5", RS_SCH5_best_fitness_history, SA_SCH5_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "SCH5", RS_SCH5_best_fitness_history, SA_SCH5_best_fitness_history)
 
 
 RS_FD10_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong1, bounds1_D10, "First Dejong Function - Random Search Algorithm - D10",
@@ -68,7 +68,7 @@ SA_FD10_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong1, bounds1_D10
                     "4.SA_FirstDejongConvergenceD10", _max_iter_SA, global_FD10, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "FD10", RS_FD10_best_fitness_history, SA_FD10_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "FD10", RS_FD10_best_fitness_history, SA_FD10_best_fitness_history)
 
 
 # Plot the convergence graph for Second Dejong function
@@ -80,7 +80,7 @@ SA_SD10_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong2, bounds2_D10
                     "5.SA_SecondDejongConvergenceD10", _max_iter_SA, global_SD10, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SD10", RS_SD10_best_fitness_history, SA_SD10_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "SD10", RS_SD10_best_fitness_history, SA_SD10_best_fitness_history)
 
 
 # Plot the convergence graph for Schwefel function
@@ -92,7 +92,7 @@ SA_SCH10_best_fitness_history = rs_sa.plot_convergence(rs_sa.schwefel, bounds3_D
                     "6.SA_SchwefelConvergenceD10", _max_iter_SA, global_SCH10, "simulated_annealing")
 
 # Plot the comparison
-rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SCH10", RS_SCH10_best_fitness_history, SA_SCH10_best_fitness_history)
+rs_sa.plot_fitness_comparison("RS", "SA", "SCH10", RS_SCH10_best_fitness_history, SA_SCH10_best_fitness_history)
 
 
 
