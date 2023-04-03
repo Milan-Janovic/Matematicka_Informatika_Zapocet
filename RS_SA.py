@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import asarray
 from numpy import sum as numpysum
+from progress.bar import Bar
 
 # def population size -> ~multiplication time increase
 _pop_size_RS = 1
@@ -126,9 +127,8 @@ def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, tempe
 """
 
 
-def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rate=0.95):
+def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rate=0.99):
     fitness_progress = []
-    fitness_progress_avg = []
 
     # Initialize the population and fitness arrays
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(1, bounds.shape[0]))
@@ -193,7 +193,9 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     best_solution_history = []
     best_solution_fitness_history = []
     fitness_progress_avg_30_runs = []
+    bar = Bar('Iteration : ', max=30)
     for i in range(30):
+        bar.next()
         #if (i + 1) % 10 == 0 and i != 0:
             #print("i = " + str(i + 1) + "/" + str(30))
         if algo == 'random_search':
@@ -209,6 +211,8 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
         best_solution_fitness_history.append(best_fitness_iter)
         fitness_progress_avg_30_runs.append(fitness_progress)
         plt.plot(fitness_progress, linewidth=0.5)
+
+    bar.finish()
 
     print(f"Best solution for {title} after 30 runs: {best_solution}")
     print(f"Best fitness for {title} after 30 runs: {best_fitness}")

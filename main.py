@@ -21,8 +21,8 @@ global_SD10 = np.full(10, 1)
 global_SCH10 = np.full(10, 420.9687)
 
 # Define max iterations -> ~quadratic time increase
-_max_iter_RS = 12000
-_max_iter_SA = 12000
+_max_iter_RS = 10000
+_max_iter_SA = 10000
 
 plt.figure(figsize=(24, 12))
 # Plot the convergence graph for First Dejong function
