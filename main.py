@@ -21,8 +21,8 @@ global_SD10 = np.full(10, 1)
 global_SCH10 = np.full(10, 420.9687)
 
 # Define max iterations -> ~quadratic time increase
-_max_iter_RS = 500
-_max_iter_SA = 500
+_max_iter_RS = 100000
+_max_iter_SA = 10000
 
 plt.figure(figsize=(24, 12))
 # Plot the convergence graph for First Dejong function
@@ -85,11 +85,11 @@ rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SD10", RS
 
 # Plot the convergence graph for Schwefel function
 RS_SCH10_best_fitness_history = rs_sa.plot_convergence(rs_sa.schwefel, bounds3_D10, "Schwefel Function - Random Search Algorithm - D10",
-                    "6.RS_chwefelConvergenceD10", _max_iter_RS, global_SCH10, "random_search")
+                    "6.RS_SchwefelConvergenceD10", _max_iter_RS, global_SCH10, "random_search")
 
 # Plot the convergence graph for Schwefel function
 SA_SCH10_best_fitness_history = rs_sa.plot_convergence(rs_sa.schwefel, bounds3_D10, "Schwefel Function - Simulated Annealing - D10",
-                    "6.SA_chwefelConvergenceD10", _max_iter_SA, global_SCH10, "simulated_annealing")
+                    "6.SA_SchwefelConvergenceD10", _max_iter_SA, global_SCH10, "simulated_annealing")
 
 # Plot the comparison
 rs_sa.plot_fitness_comparison("Random Search", "Simulated Annealing", "SCH10", RS_SCH10_best_fitness_history, SA_SCH10_best_fitness_history)

@@ -30,6 +30,9 @@ def schwefel(x):
 
 
 def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
+    fitness_progress = []
+    fitness_progress_avg = []
+
     # Initialize population with random solutions within the specified bounds
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
 
@@ -58,8 +61,10 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
             best_fitness = np.min(fitness)
             best_solution = new_pop[np.argmin(fitness)]
 
+        fitness_progress.append(best_fitness)
+
     # Return the best solution and fitness found
-    return best_solution, best_fitness
+    return best_solution, best_fitness, fitness_progress
 
 
 # Old version of the functions where the "j" loop was dependent of the pop_size, therefore if we wanted to run the
@@ -122,6 +127,9 @@ def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, tempe
 
 
 def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rate=0.95):
+    fitness_progress = []
+    fitness_progress_avg = []
+
     # Initialize the population and fitness arrays
     pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(1, bounds.shape[0]))
     fitness = np.array([obj_func(pop[0])])
@@ -172,8 +180,10 @@ def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rat
             best_fitness = current_best_fitness
             best_solution = pop[np.argmin(fitness)]
 
+        fitness_progress.append(best_fitness)
+
     # Return the best solution and fitness
-    return best_solution, best_fitness
+    return best_solution, best_fitness, fitness_progress
 
 
 def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, algo):
@@ -182,35 +192,26 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     start_time = time.time()  # Get the current time
     best_solution_history = []
     best_solution_fitness_history = []
+    fitness_progress_avg_30_runs = []
     for i in range(30):
-        fitness_history = []
-        solution_history = []
         if (i + 1) % 10 == 0 and i != 0:
             print("i = " + str(i + 1) + "/" + str(30))
         if algo == 'random_search':
-            for j in range(1, _max_iter):
-                best_solution_iter, fitness = random_search(obj_func, bounds, max_iter=_max_iter)
-                fitness_history.append(fitness)
-                solution_history.append(best_solution_iter)
-                if fitness < best_fitness:
-                    best_fitness = fitness
-                    best_solution = best_solution_iter
+            best_solution_iter, best_fitness_iter, fitness_progress = random_search(obj_func, bounds, max_iter=_max_iter)
         elif algo == 'simulated_annealing':
-            for j in range(1, _max_iter):
-                best_solution_iter, fitness = simulated_annealing(obj_func, bounds, max_iter=_max_iter)
-                fitness_history.append(fitness)
-                solution_history.append(best_solution_iter)
-                if fitness < best_fitness:
-                    best_fitness = fitness
-                    best_solution = best_solution_iter
-        best_solution_history.append(best_solution)
-        best_solution_fitness_history.append(best_fitness)
-        plt.plot(fitness_history, linewidth=0.5)
+            best_solution_iter, best_fitness_iter, fitness_progress = simulated_annealing(obj_func, bounds, max_iter=_max_iter)
+
+        if best_fitness_iter < best_fitness:
+            best_fitness = best_fitness_iter
+            best_solution = best_solution_iter
+
+        best_solution_history.append(best_solution_iter)
+        best_solution_fitness_history.append(best_fitness_iter)
+        fitness_progress_avg_30_runs.append(fitness_progress)
+        plt.plot(fitness_progress, linewidth=0.5)
 
     print(f"Best solution for {title} after 30 runs: {best_solution}")
     print(dejong1(best_solution))
-    print(dejong2(best_solution))
-    print(schwefel(best_solution))
     print(f"Best fitness for {title} after 30 runs: {best_fitness}")
 
     end_time = time.time()  # Get the current time again
@@ -223,20 +224,23 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     plt.text(0.05, 0.95, f"Best solution: {best_solution}", transform=plt.gca().transAxes, va='top', fontsize=20)
     plt.text(0.05, 0.9, f"Best fitness: {best_fitness}", transform=plt.gca().transAxes, va='top', fontsize=20)
     plt.text(0.05, 0.85, f"Global minimum: {global_min}", transform=plt.gca().transAxes, va='top', fontsize=20)
-    if algo == 'random_search':
-        plt.text(0.05, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
-                          f"s; population size = {_pop_size_RS}",fontsize=20)
-    elif algo == 'simulated_annealing':
-        plt.text(0.5, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
-                          f"s; population size = {_pop_size_SA}", fontsize=20)
+    #if algo == 'random_search':
+        #plt.text(0.05, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          #f"s; population size = {_pop_size_RS}",fontsize=20)
+    #elif algo == 'simulated_annealing':
+        #plt.text(0.5, 0.8, f"Elapsed time (30 runs) for {_max_iter} iterations each: {int(elapsed_time)} "
+                          #f"s; population size = {_pop_size_SA}", fontsize=20)
     plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Graphs/{filename}.png")
     plt.clf()  # clear the figure to avoid overlapping plots
 
     # Calculate statistics of the best_solution_fitness_history
-    min_fitness, max_fitness, mean_fitness, std_fitness = calculate_statictics(best_solution_fitness_history)
+    min_fitness, max_fitness, mean_fitness, std_fitness = calculate_statistics(best_solution_fitness_history)
 
-    plt.plot(best_solution_fitness_history, linewidth=0.5)
-    plt.title(title + "best fitness convergence", fontsize=10)
+    # Calculate sum of all of the 30 runs and devide by 30 to get avg of that run
+    fitness_progress_avg_30_runs = np.sum(fitness_progress_avg_30_runs, axis=0) / 30
+
+    plt.plot(fitness_progress_avg_30_runs, linewidth=0.5)
+    plt.title(title + " best fitness convergence", fontsize=10)
     plt.xlabel("Number of iterations", fontsize=10)
     plt.ylabel("Fitness", fontsize=10)
     plt.text(0.7, 0.95, f"Min Fitness: {min_fitness}", transform=plt.gca().transAxes, va='top', fontsize=10)
@@ -249,7 +253,7 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     return best_solution_fitness_history
 
 
-def calculate_statictics(best_solution_fitness_history):
+def calculate_statistics(best_solution_fitness_history):
     # Calculate statistics of the best_solution_fitness_history
     min_fitness = min(best_solution_fitness_history)
     max_fitness = max(best_solution_fitness_history)
@@ -267,7 +271,4 @@ def plot_fitness_comparison(func1_name, func2_name, obj_fc_and_dimensions, fitne
     plt.legend(fontsize=20)
     plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Comparison/{func1_name} " f" {func2_name} " f" {obj_fc_and_dimensions}.png")
     plt.clf()
-
-
-
 
