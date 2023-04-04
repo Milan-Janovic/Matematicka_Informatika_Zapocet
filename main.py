@@ -20,7 +20,7 @@ global_FD10 = np.full(10, 0)
 global_SD10 = np.full(10, 1)
 global_SCH10 = np.full(10, 420.9687)
 
-# Define max iterations -> ~quadratic time increase
+# Define max iterations
 _max_iter_RS = 10000
 _max_iter_SA = 10000
 
@@ -28,6 +28,7 @@ plt.figure(figsize=(24, 12))
 # Plot the convergence graph for First Dejong function
 RS_FD5_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong1, bounds1_D5, "First Dejong Function - Random Search Algorithm - D5",
                     "1.RS_FirstDejongConvergenceD5", _max_iter_RS, global_FD5, "random_search")
+
 
 # Plot the convergence graph for First Dejong function
 SA_FD5_best_fitness_history = rs_sa.plot_convergence(rs_sa.dejong1, bounds1_D5, "First Dejong Function - Simulated Annealing - D5",

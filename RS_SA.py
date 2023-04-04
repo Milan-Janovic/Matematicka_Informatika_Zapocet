@@ -68,65 +68,6 @@ def random_search(obj_func, bounds, max_iter, pop_size=_pop_size_RS):
     return best_solution, best_fitness, fitness_progress
 
 
-# Old version of the functions where the "j" loop was dependent of the pop_size, therefore if we wanted to run the
-# metropolis 10 times then pop_size = 10 but this also meant that we've generated 10 candidates on each pop - this
-# was most likely wrong --> will need to confirm with Mr. Senkerik !!!
-"""
-def simulated_annealing(obj_func, bounds, max_iter, pop_size=_pop_size_SA, temperature=100, cooling_rate=0.95):
-    # Initialize the population and fitness arrays
-    pop = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(pop_size, bounds.shape[0]))
-    fitness = np.array([obj_func(ind) for ind in pop])
-    # Set the initial best fitness and solution
-    best_fitness = np.min(fitness)
-    best_solution = pop[np.argmin(fitness)]
-
-    # Calculate radius
-    radius = 0.1 * np.abs(bounds[:, 1] - bounds[:, 0])
-
-    # Loop through the specified number of iterations
-    for i in range(max_iter):
-        # Update the temperature
-        temperature *= cooling_rate
-        # Generate a candidate population within 10% radius of the best solution
-        candidate_pop = np.random.uniform(np.maximum(bounds[:, 0], best_solution - radius),
-                                           np.minimum(bounds[:, 1], best_solution + radius),
-                                           size=(pop_size, bounds.shape[0]))
-        candidate_fitness = np.array([obj_func(ind) for ind in candidate_pop])
-
-        # Loop through each candidate solution
-        for j in range(pop_size):
-            # Calculate the difference in fitness between the candidate and current solutions
-            delta_fitness = candidate_fitness[j] - fitness[j]
-
-            # If the candidate solution has a lower fitness, accept it
-            if delta_fitness < 0:
-                pop[j] = candidate_pop[j]
-                fitness[j] = candidate_fitness[j]
-
-                # Update the best fitness and solution if necessary
-                if candidate_fitness[j] < best_fitness:
-                    best_fitness = candidate_fitness[j]
-                    best_solution = candidate_pop[j]
-
-            # If the candidate solution has a higher fitness, accept it with a probability determined by the
-            # Metropolis-Hastings criterion
-            else:
-                acceptance_prob = np.exp(-delta_fitness / temperature)
-                if np.random.rand() < acceptance_prob:
-                    pop[j] = candidate_pop[j]
-                    fitness[j] = candidate_fitness[j]
-
-        # Update the best fitness and solution if necessary (in case a better solution was found in the inner loop)
-        current_best_fitness = np.min(fitness)
-        if current_best_fitness < best_fitness:
-            best_fitness = current_best_fitness
-            best_solution = pop[np.argmin(fitness)]
-
-    # Return the best solution and fitness
-    return best_solution, best_fitness
-"""
-
-
 def simulated_annealing(obj_func, bounds, max_iter, temperature=100, cooling_rate=0.99):
     fitness_progress = []
 
@@ -196,13 +137,12 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     bar = Bar('Iteration : ', max=30)
     for i in range(30):
         bar.next()
-        #if (i + 1) % 10 == 0 and i != 0:
-            #print("i = " + str(i + 1) + "/" + str(30))
         if algo == 'random_search':
-            best_solution_iter, best_fitness_iter, fitness_progress = random_search(obj_func, bounds, max_iter=_max_iter)
+            best_solution_iter, best_fitness_iter, fitness_progress = random_search(obj_func, bounds,
+                                                                                    max_iter=_max_iter)
         elif algo == 'simulated_annealing':
-            best_solution_iter, best_fitness_iter, fitness_progress = simulated_annealing(obj_func, bounds, max_iter=_max_iter)
-
+            best_solution_iter, best_fitness_iter, fitness_progress = simulated_annealing(obj_func, bounds,
+                                                                                          max_iter=_max_iter)
         if best_fitness_iter < best_fitness:
             best_fitness = best_fitness_iter
             best_solution = best_solution_iter
@@ -233,7 +173,7 @@ def plot_convergence(obj_func, bounds, title, filename, _max_iter, global_min, a
     # Calculate statistics of the best_solution_fitness_history
     min_fitness, max_fitness, mean_fitness, std_fitness = calculate_statistics(best_solution_fitness_history)
 
-    # Calculate sum of corresponding indexes for all the 30 runs and devide by 30 to get avg of that run
+    # Calculate sum of corresponding indexes for all the 30 runs and divide by 30 to get avg of that run
     fitness_progress_avg_30_runs = np.sum(fitness_progress_avg_30_runs, axis=0) / 30
 
     plt.plot(fitness_progress_avg_30_runs, linewidth=0.5)
@@ -268,4 +208,3 @@ def plot_fitness_comparison(func1_name, func2_name, obj_fc_and_dimensions, fitne
     plt.legend(fontsize=20)
     plt.savefig(f"/Users/milanjanovic/Desktop/Fitness_Comparison/{func1_name} " f" {func2_name} " f" {obj_fc_and_dimensions}.png")
     plt.clf()
-
