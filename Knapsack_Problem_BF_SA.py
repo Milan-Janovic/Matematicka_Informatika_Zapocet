@@ -4,6 +4,7 @@ import time
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from progress.bar import Bar
 
 
 # Brute force algorithm to solve the knapsack problem
@@ -32,6 +33,8 @@ def knapsack_brute_force(capacity, items):
     # Convert the best subset to a list of item numbers and return the best value and best subset
     return best_value, [items.index(item) + 1 for item in best_subset], fitness_progress
 
+
+# Adjusted SA algorithm from part 1. (RS_SA.py)
 def knapsack_simulated_annealing(capacity, items, initial_temperature, cooling_rate, alpha=0.8, beta=1.0):
     # Initialize the best value, the best subset and fitness_progress  to 0 and empty, respectively
     current_subset = []
@@ -48,7 +51,7 @@ def knapsack_simulated_annealing(capacity, items, initial_temperature, cooling_r
 
     # Run the algorithm until the temperature reaches the temperature stopping point
     # or the MAX_ITERS calculated from maxFES of Brute Force algo -> NOT LIKELY TO HAPPEN
-    while temperature > 0.1 and iteration < MAX_ITERS_SA:
+    while temperature > 0.01 and iteration < MAX_ITERS_SA:
         # print(best_subset)
         # print(best_value)
         # Select a random neighbor state by randomly adding or removing an item
@@ -102,48 +105,53 @@ def knapsack_simulated_annealing(capacity, items, initial_temperature, cooling_r
 
 
 def print_all_items(items):
-    # Print the list of all items
-    table = PrettyTable()
-    table.field_names = ["Item Number", "Weight", "Value"]
-    for i, (weight, value) in enumerate(items):
-        table.add_row([i + 1, weight, value])
-    print("All Items:")
-    print(str(table))
-
-
-def print_solution(items, optimal_items, optimal_value, time_taken):
-    # Create a table of the optimal subset of items
-    table = PrettyTable()
-    table.field_names = ["Item Number", "Weight", "Value"]
-    total_weight = 0
-    for i, (weight, value) in enumerate(items):
-        if i + 1 in optimal_items:
+    with open("Knapsack_Fitness_Graphs/RESULTS.txt", 'a') as f:
+        # Print the list of all items
+        table = PrettyTable()
+        table.field_names = ["Item Number", "Weight", "Value"]
+        for i, (weight, value) in enumerate(items):
             table.add_row([i + 1, weight, value])
-            total_weight += weight
-
-    # Print the optimal value, total weight, and table of the optimal subset of items
-    print("Optimal Value:", optimal_value)
-    print("Optimal Weight:", total_weight)
-    print("Optimal Items:")
-    print(str(table))
-    print("Time taken:", time_taken, "seconds")
+        f.write("All Items:" + "\n")
+        f.write(str(table) + "\n")
+        f.write("\n")
+        f.close()
 
 
-def plot_value_convergence_BF(algo, fitness_progress):
-    strings = []
-    if algo == "BF":
-        strings = ["Knapsack - Brute Force", "KS_BF"]
-    elif algo == "SA":
-        strings = ["Knapsack - Simulated Annealing", "KS_Sa"]
-    else:
-        print("WAT?")
-        return
+def print_solution(items, optimal_items, optimal_value, time_taken, algo):
+    with open("Knapsack_Fitness_Graphs/RESULTS.txt", 'a') as f:
+        # Create a table of the optimal subset of items
+        table = PrettyTable()
+        table.field_names = ["Item Number", "Weight", "Value"]
+        total_weight = 0
+        for i, (weight, value) in enumerate(items):
+            if i + 1 in optimal_items:
+                table.add_row([i + 1, weight, value])
+                total_weight += weight
 
+        if algo == "BF":
+            f.write("BRUTE FORCE\n")
+        elif algo ==  "SA":
+            f.write("SIMULATED ANNEALING\n")
+        else:
+            f.write("WAT????")
+            return
+
+        # Print the optimal value, total weight, and table of the optimal subset of items
+        f.write(f"Optimal Value: " + str(optimal_value) + "\n")
+        f.write("Optimal Weight:" + str(total_weight) + "\n")
+        f.write("Optimal Items:" + "\n")
+        f.write(str(table) + "\n")
+        f.write("Time taken: " + str(time_taken) + " seconds" + "\n")
+        f.write("\n")
+        f.close()
+
+
+def plot_value_convergence_BF(fitness_progress):
     plt.plot(fitness_progress)
-    plt.title(strings[0], fontsize=30)
+    plt.title("Knapsack - Brute Force", fontsize=30)
     plt.xlabel("Number of iterations", fontsize=20)
     plt.ylabel("Value", fontsize=20)
-    plt.savefig(f"./Knapsack_Fitness_Graphs/{strings[1]}.png")
+    plt.savefig(f"./Knapsack_Fitness_Graphs/KS_BF.png")
     plt.clf()  # clear the figure to avoid overlapping plots
 
 
@@ -158,11 +166,45 @@ def plot_fitness_comparison(func1_name, func2_name, fitness_history1, fitness_hi
     plt.clf()
 
 
+def calculate_and_plot_convergence_SA(CAPACITY, items, initial_temperature, cooling_rate, number_of_runs):
+    best_value = 0
+    best_solution = None
+    best_weight = 0
+    bar = Bar('Iteration : ', max=30)
+    for i in range(number_of_runs):
+        bar.next()
+        optimal_value_SA_iter, optimal_items_SA_iter, fitness_progress_SA = knapsack_simulated_annealing(CAPACITY, items,
+                                                                                                   initial_temperature,
+                                                                                                   cooling_rate)
+        total_weight_iter = 0
+        for i, (weight, value) in enumerate(items):
+            if i + 1 in optimal_items_SA_iter:
+                total_weight_iter += weight
+
+        if optimal_value_SA_iter > best_value and total_weight_iter < CAPACITY:
+            best_value = optimal_value_SA_iter
+            best_solution = optimal_items_SA_iter
+            best_weight = total_weight_iter
+
+
+        plt.plot(fitness_progress_SA, linewidth=0.5)
+
+    bar.finish()
+
+    plt.title(f"Knapsack - Simulated Annealing ({number_of_runs} runs)", fontsize=30)
+    plt.xlabel("Number of iterations", fontsize=20)
+    plt.ylabel("Value", fontsize=20)
+    plt.savefig(f"./Knapsack_Fitness_Graphs/KS_SA.png")
+    plt.clf()  # clear the figure to avoid overlapping plots
+
+    return best_value, best_solution
+
+
 # Set plot
 plt.figure(figsize=(18, 9))
 
 # Set a number of items to choose from and knapsack capacity
-ITEMS_NUMBER = 30
+ITEMS_NUMBER = 25
 CAPACITY = 200
 
 # Set SA parameters
@@ -198,10 +240,10 @@ time_taken = end_time - start_time
 print("\nBRUTE FORCE")
 
 # Print solution
-print_solution(items, optimal_items_BF, optimal_value_BF, time_taken)
+print_solution(items, optimal_items_BF, optimal_value_BF, time_taken, "BF")
 
 # Plot
-plot_value_convergence_BF("BF", fitness_progress_BF)
+plot_value_convergence_BF(fitness_progress_BF)
 
 """
 
@@ -213,9 +255,9 @@ SA
 # Start timer
 start_time = time.time()
 
-optimal_value_SA, optimal_items_SA, fitness_progress_SA = knapsack_simulated_annealing(CAPACITY, items,
-                                                                                           initial_temperature,
-                                                                                           cooling_rate)
+# Calculate and Plot
+optimal_value_SA, optimal_items_SA = calculate_and_plot_convergence_SA(CAPACITY, items, initial_temperature,
+                                                                       cooling_rate, number_of_runs=1)
 
 # End timer and calculate the time taken to solve the problem
 end_time = time.time()
@@ -224,14 +266,12 @@ time_taken = end_time - start_time
 print("\nSIMULATED ANNEALING")
 
 # Print solution
-print_solution(items, optimal_items_SA, optimal_value_SA, time_taken)
+print_solution(items, optimal_items_SA, optimal_value_SA, time_taken, "SA")
 
-# Plot
-plot_value_convergence_BF("SA", fitness_progress_SA)
 
 """
 
-COMPARE -> Not sure if should be done?
+COMPARE -> Not sure if should be done as iterations don't match ???
 
 """
 
